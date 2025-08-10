@@ -167,7 +167,7 @@
             color: var(--light-accent);
         }
 
-        form input, form select {
+        form input, form select, form textarea {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -175,6 +175,11 @@
             border-radius: 4px;
             background-color: var(--dark-navy);
             color: var(--text-light);
+        }
+
+        form textarea {
+            height: 100px;
+            resize: vertical;
         }
 
         .time-group {
@@ -238,6 +243,25 @@
             margin: 5px 0;
             text-align: left;
             color: var(--text-light);
+        }
+
+        /* Footer styles */
+        footer {
+            text-align: center;
+            color: var(--light-accent);
+            font-size: 0.9em;
+            margin-top: 40px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        footer a {
+            color: var(--wave-blue);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--accent-hover);
         }
 
         /* Subtle wave background */
@@ -372,15 +396,22 @@
                     </select>
                 </div>
 
+                <label for="notes">Notes:</label>
+                <textarea id="notes" name="notes"></textarea>
+
                 <button type="submit">Reserve Now</button>
             </form>
         </div>
     </div>
 
+    <footer>
+        Created by Honorius Neogy, TechToucan Repair. Learn more about me: <a href="https://neogy.dev/">https://neogy.dev/</a>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script>
         // Replace with your own Firebase config
-        const firebaseConfig = {
+         const firebaseConfig = {
 		apiKey: "AIzaSyCDLTQNqd8yurjqXv6DmBdIPFCtokrToto",
 		authDomain: "reserveraven-13f34.firebaseapp.com",
 		databaseURL: "https://reserveraven-13f34-default-rtdb.firebaseio.com",
@@ -456,6 +487,7 @@
                 const name = document.getElementById('name').value;
                 const phone = document.getElementById('phone').value;
                 const email = document.getElementById('email').value;
+                const notes = document.getElementById('notes').value;
                 const startHour = parseInt(document.getElementById('startHour').value);
                 const startMinute = parseInt(document.getElementById('startMinute').value);
                 const startAmpm = document.getElementById('startAmpm').value;
@@ -507,7 +539,8 @@
                     extendedProps: {
                         name: name,
                         phone: phone,
-                        email: email
+                        email: email,
+                        notes: notes
                     }
                 };
 
@@ -570,6 +603,7 @@
                         <p><strong>Name:</strong> ${booking.extendedProps.name}</p>
                         <p><strong>Phone:</strong> ${booking.extendedProps.phone}</p>
                         <p><strong>Email:</strong> ${booking.extendedProps.email}</p>
+                        <p><strong>Notes:</strong> ${booking.extendedProps.notes || 'None'}</p>
                     `;
                     listEl.appendChild(li);
                 });
