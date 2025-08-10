@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserve Raven</title>
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --dark-navy: #001f3f;
+            --deep-blue: #0a2540;
+            --wave-blue: #0077b6;
+            --light-accent: #caf0f8;
+            --text-light: #ffffff;
+            --border-color: #48cae4;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --accent-hover: #00b4d8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: var(--dark-navy);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--light-accent);
+            text-shadow: 2px 2px 4px var(--shadow-color);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        #info-container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            gap: 20px;
+        }
+
+        #instructions, #contact-info {
+            flex: 1;
+            background-color: var(--deep-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        #instructions h2, #contact-info h2 {
+            color: var(--light-accent);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #instructions p, #contact-info p {
+            text-align: center;
+            color: var(--light-accent);
+            font-size: 1.1em;
+            margin-bottom: 0;
+        }
+
+        #calendar {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            background-color: var(--deep-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        /* Dark theme overrides for FullCalendar */
+        .fc {
+            --fc-page-bg-color: var(--deep-blue);
+            --fc-neutral-bg-color: rgba(255,255,255,0.05);
+            --fc-neutral-text-color: var(--text-light);
+            --fc-border-color: var(--border-color);
+            --fc-button-text-color: var(--text-light);
+            --fc-button-bg-color: var(--wave-blue);
+            --fc-button-border-color: var(--border-color);
+            --fc-button-hover-bg-color: var(--accent-hover);
+            --fc-button-active-bg-color: #004e73;
+            --fc-event-bg-color: var(--wave-blue);
+            --fc-event-border-color: var(--border-color);
+            --fc-event-text-color: var(--text-light);
+            --fc-today-bg-color: rgba(72, 202, 228, 0.25);
+            --fc-highlight-color: rgba(202, 240, 248, 0.3);
+            --fc-list-event-hover-bg-color: var(--accent-hover);
+        }
+
+        .fc .fc-col-header-cell {
+            background-color: var(--wave-blue);
+            color: var(--text-light);
+            font-weight: bold;
+        }
+
+        .fc .fc-daygrid-day-frame {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .fc .fc-daygrid-day-frame:hover {
+            background-color: rgba(202, 240, 248, 0.1);
+        }
+
+        .fc .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 0.85em;
+            transition: transform 0.2s ease;
+        }
+
+        .fc .fc-event:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: var(--deep-blue);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        .close {
+            color: var(--light-accent);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: var(--accent-hover);
+            text-decoration: none;
+        }
+
+        form label {
+            display: block;
+            margin: 10px 0 5px;
+            color: var(--light-accent);
+        }
+
+        form input, form select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--dark-navy);
+            color: var(--text-light);
+        }
+
+        .time-group {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .time-group select {
+            width: 32%;
+        }
+
+        form button {
+            background-color: var(--wave-blue);
+            color: var(--text-light);
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Upcoming reservations */
+        #upcoming {
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: var(--deep-blue);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        #upcoming h2 {
+            color: var(--light-accent);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #reservationList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #reservationList li {
+            background-color: var(--wave-blue);
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        #reservationList li:hover {
+            transform: translateY(-2px);
+        }
+
+        #reservationList li p {
+            margin: 5px 0;
+            text-align: left;
+            color: var(--text-light);
+        }
+
+        /* Subtle wave background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--deep-blue), var(--dark-navy));
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            #info-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Reserve Raven</h1>
+
+    <div id="info-container">
+        <div id="instructions">
+            <h2>Instructions on How to Make a Reservation</h2>
+            <p>Click on a date in the month view to open the booking form. You can adjust the date if needed. Enter your details and select start/end times via dropdowns. Reservations appear on the calendar and in the upcoming list below, updating in real-time. Click a reservation on the calendar to cancel it.</p>
+        </div>
+
+        <div id="contact-info">
+            <h2>Contact Us</h2>
+            <p>To notify about any concern or seek assistance, please contact Honorius Neogy, Owner of TechToucan Repair, the website developer at Email Honorius@neogy.dev or call/text at +1 (907) 602-1040.</p>
+        </div>
+    </div>
+
+    <div id="calendar"></div>
+
+    <div id="upcoming">
+        <h2>Upcoming Reservations</h2>
+        <ul id="reservationList"></ul>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Book Yacht Reservation</h2>
+            <form id="bookingForm">
+                <label for="reservationDate">Reservation Date:</label>
+                <input type="date" id="reservationDate" name="reservationDate" required>
+
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="phone">Phone Number:</label>
+                <input type="tel" id="phone" name="phone" required>
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+
+                <label>Start Time:</label>
+                <div class="time-group">
+                    <select id="startHour" required>
+                        <option value="">Hour</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                    </select>
+                    <select id="startMinute" required>
+                        <option value="">Minute</option>
+                        <script>
+                            for (let i = 0; i < 60; i++) {
+                                const min = i < 10 ? '0' + i : i;
+                                document.write(`<option value="${min}">${min}</option>`);
+                            }
+                        </script>
+                    </select>
+                    <select id="startAmpm" required>
+                        <option value="">AM/PM</option>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+
+                <label>End Time:</label>
+                <div class="time-group">
+                    <select id="endHour" required>
+                        <option value="">Hour</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                    </select>
+                    <select id="endMinute" required>
+                        <option value="">Minute</option>
+                        <script>
+                            for (let i = 0; i < 60; i++) {
+                                const min = i < 10 ? '0' + i : i;
+                                document.write(`<option value="${min}">${min}</option>`);
+                            }
+                        </script>
+                    </select>
+                    <select id="endAmpm" required>
+                        <option value="">AM/PM</option>
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+
+                <button type="submit">Reserve Now</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        // Replace with your own Firebase config
+        const firebaseConfig = {
+		apiKey: "AIzaSyCDLTQNqd8yurjqXv6DmBdIPFCtokrToto",
+		authDomain: "reserveraven-13f34.firebaseapp.com",
+		databaseURL: "https://reserveraven-13f34-default-rtdb.firebaseio.com",
+		projectId: "reserveraven-13f34",
+		storageBucket: "reserveraven-13f34.firebasestorage.app",
+		messagingSenderId: "554985261960",
+		appId: "1:554985261960:web:8e0d31e8b72994456b483d",
+		measurementId: "G-6KB7P4L83S"
+		};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const bookingsRef = db.ref('bookings');
+
+        // Modal elements
+        const modal = document.getElementById('bookingModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        const bookingForm = document.getElementById('bookingForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const reservationDateInput = document.getElementById('reservationDate');
+        let initialSelectedDate = null;
+
+        // Close modal
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Initialize FullCalendar
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                dateClick: function(info) {
+                    initialSelectedDate = info.date;
+                    const yyyy = initialSelectedDate.getFullYear();
+                    const mm = String(initialSelectedDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(initialSelectedDate.getDate()).padStart(2, '0');
+                    reservationDateInput.value = `${yyyy}-${mm}-${dd}`;
+                    modalTitle.textContent = `Book Yacht for ${info.dateStr}`;
+                    modal.style.display = 'block';
+                },
+                eventClick: function(info) {
+                    const booking = info.event.extendedProps;
+                    if (confirm(`Cancel reservation by ${booking.name} from ${new Date(booking.start).toLocaleTimeString()} to ${new Date(booking.end).toLocaleTimeString()}?`)) {
+                        bookingsRef.child(info.event.id).remove();
+                    }
+                },
+                eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
+                events: [], // Initial empty
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: ''
+                }
+            });
+            calendar.render();
+
+            // Form submit
+            bookingForm.onsubmit = function(e) {
+                e.preventDefault();
+                const selectedDateStr = reservationDateInput.value;
+                if (!selectedDateStr) {
+                    alert('Please select a reservation date.');
+                    return;
+                }
+                const name = document.getElementById('name').value;
+                const phone = document.getElementById('phone').value;
+                const email = document.getElementById('email').value;
+                const startHour = parseInt(document.getElementById('startHour').value);
+                const startMinute = parseInt(document.getElementById('startMinute').value);
+                const startAmpm = document.getElementById('startAmpm').value;
+                const endHour = parseInt(document.getElementById('endHour').value);
+                const endMinute = parseInt(document.getElementById('endMinute').value);
+                const endAmpm = document.getElementById('endAmpm').value;
+
+                if (isNaN(startHour) || isNaN(startMinute) || !startAmpm || isNaN(endHour) || isNaN(endMinute) || !endAmpm) {
+                    alert('Please select valid start and end times.');
+                    return;
+                }
+
+                const startDate = new Date(selectedDateStr);
+                let startH = startHour;
+                if (startAmpm === 'PM' && startH !== 12) startH += 12;
+                if (startAmpm === 'AM' && startH === 12) startH = 0;
+                startDate.setHours(startH, startMinute, 0);
+
+                const endDate = new Date(selectedDateStr);
+                let endH = endHour;
+                if (endAmpm === 'PM' && endH !== 12) endH += 12;
+                if (endAmpm === 'AM' && endH === 12) endH = 0;
+                endDate.setHours(endH, endMinute, 0);
+
+                if (endDate <= startDate) {
+                    alert('End time must be after start time.');
+                    return;
+                }
+
+                // Check for overlaps
+                const existingEvents = calendar.getEvents();
+                let overlap = false;
+                for (let event of existingEvents) {
+                    if (startDate < event.end && endDate > event.start) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                if (overlap) {
+                    alert('This time slot overlaps with an existing reservation.');
+                    return;
+                }
+
+                const newBooking = {
+                    title: `Reserved by ${name}`,
+                    start: startDate.toISOString(),
+                    end: endDate.toISOString(),
+                    allDay: false,
+                    extendedProps: {
+                        name: name,
+                        phone: phone,
+                        email: email
+                    }
+                };
+
+                bookingsRef.push(newBooking);
+                modal.style.display = 'none';
+                bookingForm.reset();
+            };
+
+            // Real-time listeners for updates
+            bookingsRef.on('child_added', function(snap) {
+                calendar.addEvent({
+                    id: snap.key,
+                    ...snap.val()
+                });
+            });
+
+            bookingsRef.on('child_removed', function(snap) {
+                const event = calendar.getEventById(snap.key);
+                if (event) {
+                    event.remove();
+                }
+            });
+
+            bookingsRef.on('child_changed', function(snap) {
+                const event = calendar.getEventById(snap.key);
+                if (event) {
+                    event.setProp('title', snap.val().title);
+                    event.setStart(snap.val().start);
+                    event.setEnd(snap.val().end);
+                    // Update other props as needed
+                }
+            });
+
+            // For upcoming reservations, use value to fetch all and filter
+            bookingsRef.on('value', function(snap) {
+                const bookings = snap.val();
+                const upcomingList = [];
+
+                if (bookings) {
+                    Object.entries(bookings).forEach(([key, booking]) => {
+                        const start = new Date(booking.start);
+                        if (start > new Date()) {
+                            upcomingList.push({
+                                id: key,
+                                ...booking,
+                                startDate: start
+                            });
+                        }
+                    });
+                }
+
+                const listEl = document.getElementById('reservationList');
+                listEl.innerHTML = '';
+                upcomingList.sort((a, b) => a.startDate - b.startDate);
+                upcomingList.forEach(booking => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <p><strong>Date:</strong> ${new Date(booking.start).toLocaleDateString()}</p>
+                        <p><strong>Time:</strong> ${new Date(booking.start).toLocaleTimeString()} - ${new Date(booking.end).toLocaleTimeString()}</p>
+                        <p><strong>Name:</strong> ${booking.extendedProps.name}</p>
+                        <p><strong>Phone:</strong> ${booking.extendedProps.phone}</p>
+                        <p><strong>Email:</strong> ${booking.extendedProps.email}</p>
+                    `;
+                    listEl.appendChild(li);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
