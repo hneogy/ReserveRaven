@@ -24,9 +24,10 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 40px;
-            background-color: var(--dark-navy);
+            background: linear-gradient(to right, #373B44, #4286f4);
             color: var(--text-light);
             line-height: 1.6;
+            position: relative; /* For positioning waves */
         }
 
         h1 {
@@ -52,6 +53,13 @@
             border-radius: 12px;
             padding: 20px;
             box-shadow: 0 4px 8px var(--shadow-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+
+        #instructions:hover, #contact-info:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px var(--shadow-color);
+            background-color: #111111; /* Subtle color change on hover */
         }
 
         #instructions h2, #contact-info h2 {
@@ -75,6 +83,11 @@
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 4px 8px var(--shadow-color);
+            transition: transform 0.3s ease;
+        }
+
+        #calendar:hover {
+            transform: scale(1.01);
         }
 
         /* Dark theme overrides for FullCalendar */
@@ -115,11 +128,13 @@
             border-radius: 4px;
             padding: 2px 4px;
             font-size: 0.85em;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
         }
 
         .fc .fc-event:hover {
             transform: scale(1.05);
+            box-shadow: 0 2px 5px rgba(255, 255, 255, 0.2);
+            background-color: #005f8e; /* Color change on hover for events */
         }
 
         /* Modal styles */
@@ -175,6 +190,12 @@
             border-radius: 4px;
             background-color: var(--dark-navy);
             color: var(--text-light);
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        form input:focus, form select:focus, form textarea:focus {
+            border-color: var(--accent-hover);
+            background-color: #002a5a; /* Subtle color shift on focus */
         }
 
         form textarea {
@@ -212,8 +233,13 @@
             background-color: var(--deep-blue);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             box-shadow: 0 4px 8px var(--shadow-color);
+            transition: transform 0.3s ease;
+        }
+
+        #upcoming:hover {
+            transform: scale(1.01);
         }
 
         #upcoming h2 {
@@ -232,11 +258,13 @@
             margin-bottom: 10px;
             padding: 15px;
             border-radius: 8px;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
         }
 
         #reservationList li:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+            background-color: #005f8e; /* Color change on hover for list items */
         }
 
         #reservationList li p {
@@ -265,6 +293,45 @@
             color: var(--accent-hover);
         }
 
+        /* Wave animation for beach vibe */
+        #waves {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            overflow: hidden;
+            z-index: -1; /* Behind content */
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            left: -50%;
+            background-color: rgba(0, 90, 110, 0.4);
+            border-radius: 45%;
+            animation: rotate-wave 10s linear infinite;
+        }
+
+        .wave:nth-child(2) {
+            top: 10%;
+            background-color: rgba(0, 70, 110, 0.4);
+            border-radius: 43%;
+            animation-duration: 7s;
+        }
+
+        .wave:nth-child(3) {
+            top: 20%;
+            background-color: rgba(0, 50, 90, 0.4);
+            border-radius: 40%;
+            animation-duration: 5s;
+        }
+
+        @keyframes rotate-wave {
+            100% { transform: rotate(360deg); }
+        }
+
         /* Subtle wave background */
         body::before {
             content: '';
@@ -275,7 +342,7 @@
             height: 100%;
             background: linear-gradient(to bottom, var(--deep-blue), var(--dark-navy));
             opacity: 0.4;
-            z-index: -1;
+            z-index: -2;
         }
 
         @keyframes fadeIn {
@@ -287,6 +354,27 @@
         @media (max-width: 768px) {
             #info-container {
                 flex-direction: column;
+            }
+            body {
+                margin: 20px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+            #calendar {
+                padding: 10px;
+            }
+            #upcoming {
+                padding: 10px;
+            }
+            #instructions, #contact-info {
+                padding: 15px;
+            }
+            #reservationList li {
+                padding: 10px;
+            }
+            #waves {
+                height: 100px;
             }
         }
     </style>
@@ -405,9 +493,26 @@
         </div>
     </div>
 
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-details">&times;</span>
+            <h2>Booking Details</h2>
+            <div id="detailsContent"></div>
+            <button id="cancelBookingBtn" style="background-color: #ff4d4d; margin-top: 10px;">Cancel Reservation</button>
+        </div>
+    </div>
+
     <footer>
         Created by Honorius Neogy, TechToucan Repair. Learn more about me: <a href="https://neogy.dev/">https://neogy.dev/</a>
     </footer>
+
+    <!-- Wave container for beach vibe -->
+    <div id="waves">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <script>
@@ -436,15 +541,28 @@
         const reservationDateInput = document.getElementById('reservationDate');
         let initialSelectedDate = null;
 
-        // Close modal
+        // Details Modal elements
+        const detailsModal = document.getElementById('detailsModal');
+        const closeDetailsBtn = document.getElementsByClassName('close-details')[0];
+        const detailsContent = document.getElementById('detailsContent');
+        const cancelBookingBtn = document.getElementById('cancelBookingBtn');
+        let currentEventId = null;
+
+        // Close booking modal
         closeBtn.onclick = function() {
             modal.style.display = 'none';
         };
 
         window.onclick = function(event) {
-            if (event.target == modal) {
+            if (event.target == modal || event.target == detailsModal) {
                 modal.style.display = 'none';
+                detailsModal.style.display = 'none';
             }
+        };
+
+        // Close details modal
+        closeDetailsBtn.onclick = function() {
+            detailsModal.style.display = 'none';
         };
 
         // Initialize FullCalendar
@@ -463,9 +581,20 @@
                 },
                 eventClick: function(info) {
                     const booking = info.event.extendedProps;
-                    if (confirm(`Cancel reservation by ${booking.name} from ${new Date(booking.start).toLocaleTimeString()} to ${new Date(booking.end).toLocaleTimeString()}?`)) {
-                        bookingsRef.child(info.event.id).remove();
-                    }
+                    detailsContent.innerHTML = `
+                        <p><strong>Date:</strong> ${new Date(info.event.start).toLocaleDateString()}</p>
+                        <p><strong>Time:</strong> ${new Date(info.event.start).toLocaleTimeString()} - ${new Date(info.event.end).toLocaleTimeString()}</p>
+                        <p><strong>Name:</strong> ${booking.name}</p>
+                        <p><strong>Phone:</strong> ${booking.phone}</p>
+                        <p><strong>Email:</strong> ${booking.email}</p>
+                        <p><strong>Notes:</strong> ${booking.notes || 'None'}</p>
+                    `;
+                    currentEventId = info.event.id;
+                    detailsModal.style.display = 'block';
+                },
+                eventMouseEnter: function(info) {
+                    info.el.style.cursor = 'pointer';
+                    info.el.title = `Reserved by ${info.event.extendedProps.name} (${new Date(info.event.start).toLocaleTimeString()} - ${new Date(info.event.end).toLocaleTimeString()})`;
                 },
                 eventTimeFormat: { hour: 'numeric', minute: '2-digit', meridiem: 'short' },
                 events: [], // Initial empty
@@ -476,6 +605,14 @@
                 }
             });
             calendar.render();
+
+            // Cancel button in details modal
+            cancelBookingBtn.onclick = function() {
+                if (confirm('Are you sure you want to cancel this reservation?')) {
+                    bookingsRef.child(currentEventId).remove();
+                    detailsModal.style.display = 'none';
+                }
+            };
 
             // Form submit
             bookingForm.onsubmit = function(e) {
